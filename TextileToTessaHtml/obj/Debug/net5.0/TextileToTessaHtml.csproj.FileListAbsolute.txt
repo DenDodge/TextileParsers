@@ -1,0 +1,12 @@
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\bin\Debug\net5.0\TextileToTessaHtml.deps.json
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\bin\Debug\net5.0\TextileToTessaHtml.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\bin\Debug\net5.0\ref\TextileToTessaHtml.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\bin\Debug\net5.0\TextileToTessaHtml.pdb
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.csproj.AssemblyReference.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.GeneratedMSBuildEditorConfig.editorconfig
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.AssemblyInfoInputs.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.AssemblyInfo.cs
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.csproj.CoreCompileInputs.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\ref\TextileToTessaHtml.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\TextileToTessaHtml\obj\Debug\net5.0\TextileToTessaHtml.pdb

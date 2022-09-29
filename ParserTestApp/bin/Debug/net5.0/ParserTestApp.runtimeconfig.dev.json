@@ -1,0 +1,10 @@
+{
+  "runtimeOptions": {
+    "additionalProbingPaths": [
+      "C:\\Users\\nestr\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\nestr\\.nuget\\packages",
+      "D:\\VS2022\\VS2022_Components\\NuGetPackages",
+      "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
+    ]
+  }
+}

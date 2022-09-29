@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+    <PropertyGroup>
+        <OutputType>Exe</OutputType>
+        <TargetFramework>net5.0</TargetFramework>
+        <RootNamespace>TestApp</RootNamespace>
+    </PropertyGroup>
+
+    <ItemGroup>
+      <ProjectReference Include="..\NTextileCore\NTextileCore.csproj" />
+      <ProjectReference Include="..\TextileToHTML\TextileToHTML.csproj" />
+      <ProjectReference Include="..\TextileToTessaHtml\TextileToTessaHtml.csproj" />
+    </ItemGroup>
+
+</Project>

@@ -1,0 +1,12 @@
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\bin\Debug\net5.0\TextileCore.deps.json
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\bin\Debug\net5.0\TextileCore.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\bin\Debug\net5.0\ref\TextileCore.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\bin\Debug\net5.0\TextileCore.pdb
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.csproj.AssemblyReference.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.GeneratedMSBuildEditorConfig.editorconfig
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.AssemblyInfoInputs.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.AssemblyInfo.cs
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.csproj.CoreCompileInputs.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\ref\TextileCore.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileCore\TextileCore\obj\Debug\net5.0\TextileCore.pdb
