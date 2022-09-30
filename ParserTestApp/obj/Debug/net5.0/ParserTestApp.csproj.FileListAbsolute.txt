@@ -7,10 +7,8 @@ D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\Parse
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\ParserTestApp.pdb
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\NTextileCore.dll
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\TextileToHTML.dll
-D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\TextileToTessaHtml.dll
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\NTextileCore.pdb
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\TextileToHTML.pdb
-D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\TextileToTessaHtml.pdb
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ParserTestApp.csproj.AssemblyReference.cache
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ParserTestApp.GeneratedMSBuildEditorConfig.editorconfig
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ParserTestApp.AssemblyInfoInputs.cache
@@ -21,3 +19,4 @@ D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\Parse
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ref\ParserTestApp.dll
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ParserTestApp.pdb
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\obj\Debug\net5.0\ParserTestApp.genruntimeconfig.cache
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\HtmlAgilityPack.dll

@@ -1,8 +1,10 @@
 {
   "version": 2,
-  "dgSpecHash": "c6LTYEg6GsLZwRzppT60xi4e+ch3i7FlVMJRUdD4qzklPDYldKtJXJxTvqz52L+AsIpK6I2jEo7eYt6+rdyXNw==",
+  "dgSpecHash": "Sdj3MSCNKPyh+quPgknrKfCKGRpodSNQUa/K5XPxGimE9v3RbvjWoUKOGfHzXlxk4kgWJeqGX4QO5q0zBePusg==",
   "success": true,
   "projectFilePath": "D:\\WORK_SYNTELLECT\\_from Desktop\\Таски\\tech_portal\\202\\TextileParsers\\ParserTestApp\\ParserTestApp.csproj",
-  "expectedPackageFiles": [],
+  "expectedPackageFiles": [
+    "C:\\Users\\nestr\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512"
+  ],
   "logs": []
 }

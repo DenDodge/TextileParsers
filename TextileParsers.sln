@@ -6,8 +6,6 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextileToHTML", "TextileToH
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ParserTestApp", "ParserTestApp\ParserTestApp.csproj", "{7DEA5D48-349A-4954-AF88-A7B1D30F3EDD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TextileToTessaHtml", "TextileToTessaHtml\TextileToTessaHtml.csproj", "{0F2196EB-26AE-4429-93CC-CCEF00EC6663}"
-EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -26,9 +24,5 @@ Global
 		{7DEA5D48-349A-4954-AF88-A7B1D30F3EDD}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{7DEA5D48-349A-4954-AF88-A7B1D30F3EDD}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{7DEA5D48-349A-4954-AF88-A7B1D30F3EDD}.Release|Any CPU.Build.0 = Release|Any CPU
-		{0F2196EB-26AE-4429-93CC-CCEF00EC6663}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{0F2196EB-26AE-4429-93CC-CCEF00EC6663}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{0F2196EB-26AE-4429-93CC-CCEF00EC6663}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{0F2196EB-26AE-4429-93CC-CCEF00EC6663}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 EndGlobal
