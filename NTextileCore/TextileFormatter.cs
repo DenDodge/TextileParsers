@@ -22,6 +22,7 @@ namespace NTextileCore
         {
             RegisterFormatterState<HeaderFormatterState>();
             RegisterFormatterState<BlockQuoteFormatterState>();
+            RegisterFormatterState<BlockQuoteRedmineFormatterState>();
             RegisterFormatterState<ParagraphFormatterState>();
             RegisterFormatterState<FootNoteFormatterState>();
             RegisterFormatterState<OrderedListFormatterState>();
