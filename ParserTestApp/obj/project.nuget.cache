@@ -1,10 +1,16 @@
 {
   "version": 2,
-  "dgSpecHash": "Sdj3MSCNKPyh+quPgknrKfCKGRpodSNQUa/K5XPxGimE9v3RbvjWoUKOGfHzXlxk4kgWJeqGX4QO5q0zBePusg==",
+  "dgSpecHash": "2G3Za63wE0jjJbkXBqkEu9AKc1V9MpduenAXFcRaZXkezPnvLNJMIlfd+AgAAz33WgaQx6kDh58ukg7ZTQGSzQ==",
   "success": true,
   "projectFilePath": "D:\\WORK_SYNTELLECT\\_from Desktop\\Таски\\tech_portal\\202\\TextileParsers\\ParserTestApp\\ParserTestApp.csproj",
   "expectedPackageFiles": [
-    "C:\\Users\\nestr\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512"
+    "C:\\Users\\nestr\\.nuget\\packages\\anglesharp\\0.17.1\\anglesharp.0.17.1.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\anglesharp.css\\0.16.4\\anglesharp.css.0.16.4.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\htmlagilitypack\\1.11.46\\htmlagilitypack.1.11.46.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\htmlsanitizer\\7.1.542\\htmlsanitizer.7.1.542.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\system.buffers\\4.5.1\\system.buffers.4.5.1.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\system.runtime.compilerservices.unsafe\\6.0.0\\system.runtime.compilerservices.unsafe.6.0.0.nupkg.sha512",
+    "C:\\Users\\nestr\\.nuget\\packages\\system.text.encoding.codepages\\6.0.0\\system.text.encoding.codepages.6.0.0.nupkg.sha512"
   ],
   "logs": []
 }

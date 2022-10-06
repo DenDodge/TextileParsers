@@ -14,23 +14,15 @@ namespace TestApp
         /// <summary>
         /// Флаг, что строка из сообщения топика.
         /// </summary>
-        private static bool IsTopicText;
-        
+        private bool IsTopicText;
+
+        #region Static Fields
+
         /// <summary>
         /// Пустое описание инцидента.
         /// Применяется, если входящая строка пустая или с пробелами.
         /// </summary>
-        private const string EmptyString = "{\"Text\":\"<div class=\\\"forum-div\\\"><p><span> </span></p></div>\"}";
-
-        /// <summary>
-        /// Шаблон регулярного выражения для блоков "&lt;pre&gt;&lt;code&gt;".
-        /// </summary>
-        private static readonly string preCodeTagsTemplate = "<pre><code.*?>";
-        
-        /// <summary>
-        /// Регулярное выражение для секции кода с "pre".
-        /// </summary>
-        private static readonly Regex _preCodeTag = new (preCodeTagsTemplate, RegexOptions.Singleline | RegexOptions.Compiled);
+        private static readonly string EmptyString = "{\"Text\":\"<div class=\\\"forum-div\\\"><p><span> </span></p></div>\"}";
 
         /// <summary>
         /// Список обработчиков тегов разметки.
@@ -46,15 +38,18 @@ namespace TestApp
             ("//ol", HandleOrderedList),
             ("//li", HandleListItem),
             ("//blockquote", HandleBlockquote),
-            ("//precode", HandlePreCode),
-            ("//pre", HandlePre),
             ("//code", HandleCode),
+            ("//pre", HandlePre),
+            ("//a", HandleLink),
             ("//br", HandleBreakLine),
+            ("//p", HandleParagraph)
         };
 
         #endregion
 
-        public static (string ResultString, HashSet<Guid> AttachedFileIds) Parse(string mainString, bool isTopicText)
+        #endregion
+
+        public (string ResultString, HashSet<Guid> AttachedFileIds) Parse(string mainString, bool isTopicText)
         {
             // если пришла пустая строка - вернем заглушку.
             if (string.IsNullOrWhiteSpace(mainString))
@@ -62,24 +57,11 @@ namespace TestApp
                 return (EmptyString, new HashSet<Guid>());
             }
             
-            IsTopicText = isTopicText;
+            this.IsTopicText = isTopicText;
             
             // получаю HTML строку со стандартной разметкой.
             var parseString = TextileFormatter.FormatString(mainString);
-            
-            // парсер возвращает результат обернутый в <p>. Для корректной разметки - нужно еще обернуть все в <span>.
-            // TODO: возможно, нужно удалить или поправить форматирование.
-            //parseString = parseString.Replace("<p>", "<p><span>", StringComparison.CurrentCulture);
-            //parseString = parseString.Replace("</p>", "</span></p>", StringComparison.CurrentCulture);
 
-            // делаем отдельный тег <precode></precode> для моноширинного БЛОКА.
-            // если блоки <pre> и <code> идут друг за другом.
-            while (Regex.IsMatch(parseString, preCodeTagsTemplate, RegexOptions.IgnorePatternWhitespace | RegexOptions.Singleline | RegexOptions.Compiled))
-            {
-                parseString = _preCodeTag.Replace(parseString, "<precode>");
-            }
-            parseString = parseString.Replace("</code></pre>", "</precode>");
-            
             // получаю DOM дерево полученного HTML.
             var doc = new HtmlDocument();
             doc.LoadHtml(parseString);
@@ -97,10 +79,9 @@ namespace TestApp
             }
 
             // получаем преобразованный с помощью HtmlAgilityPack текст.
-            // HtmlAgilityPack - в разметке не экранирует кавычки. А в разметке они нужны.
-            parseString = doc.DocumentNode.InnerHtml.Replace("\"", "\\\"", StringComparison.CurrentCulture);
+            parseString = doc.DocumentNode.InnerHtml;
             // устанавливаем разметку в начало и конец строки.
-            parseString = PostParseProcess(parseString);
+            parseString = this.PostParseProcess(parseString);
 
             return (parseString, new HashSet<Guid>());
         }
@@ -108,7 +89,7 @@ namespace TestApp
         #region Private Methods
 
         #region TagHenlers
-
+        
         /// <summary>
         /// Обработчик жирного текста.
         /// </summary>
@@ -209,51 +190,104 @@ namespace TestApp
         }
 
         /// <summary>
-        /// Обработчик тега &lt;pre&gt;&lt;code&gt;.
+        /// Обработчик тега &lt;code/&gt;.
         /// </summary>
-        /// <param name="preCodeTag">Узел &lt;pre&gt;&lt;code&gt; дерева HTML.</param>
-        private static void HandlePreCode(HtmlNode preCodeTag)
+        /// <param name="codeTag">Узел &lt;code/&gt; дерева HTML.</param>
+        private static void HandleCode(HtmlNode codeTag)
         {
-            var tessaPreTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
-            // преобразуем перенос на новую строку в <br/> для того, чтобы моноширинный блок красиво отображался.
-            tessaPreTag.InnerHtml = preCodeTag.InnerHtml.Replace("\n", "<br/>");;
-            preCodeTag.ParentNode.ReplaceChild(tessaPreTag, preCodeTag);
+            // проверяем - у тега <code/> есть родитель <pre/>?
+            var preParenTag = codeTag.ParentNode.SelectNodes("/pre");
+            // если нет - тогда это инлайн строка, где мы не рассматриваем форматирование строки.
+            // <code/> => <span style="font-size: 14px" data-custom-style="font-size:14;" class="forum-block-inline"/>"
+            if (preParenTag is null)
+            {
+                var tessaCodeTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
+                tessaCodeTag.InnerHtml = codeTag.InnerHtml;
+                codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
+            }
+            // если есть - тогда добавляем корректное форматирование в строку,
+            else
+            {
+                // делим текст на строки.
+                var codeInnerHtml = codeTag.InnerHtml;
+                codeTag.RemoveAll();
+                var lines = codeInnerHtml.Split('\n');
+                foreach (var line in lines)
+                {
+                    // каждую строку оборачиваем в <p/>
+                    var pTag = HtmlNode.CreateNode("<p/>");
+                    pTag.InnerHtml = line.Replace("\n", "");
+                    codeTag.ChildNodes.Add(pTag);
+                }
+            }
         }
         
         /// <summary>
-        /// Обработчик тега &lt;pre&gt;.
+        /// Обработчик тега &lt;pre/&gt;.
         /// </summary>
-        /// <param name="preTag">Узел &lt;pre&gt; дерева HTML.</param>
+        /// <param name="preTag">Узел &lt;pre/&gt; дерева HTML.</param>
         private static void HandlePre(HtmlNode preTag)
         {
             // в <pre> могут быть теги <code>.
-            var codeTags = preTag.SelectNodes("//code");
-            // если тегов <code> нет - обрабатываем как моноширинную строку.
-            if (codeTags is null)
+            var codeTags = preTag.SelectNodes("code");
+            // если есть теги <code/>.
+            if (codeTags is not null)
             {
-                var tessaPreTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
+                // находим текст, как прямой наследник <pre>.
+                var text = preTag.SelectNodes("text()");
+                // если есть текст - тогда code отдельно в блок
+                if (text is not null)
+                {
+                    foreach (var codeTag in codeTags)
+                    {
+                        var tessaCodeTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
+                        tessaCodeTag.InnerHtml = codeTag.InnerHtml;
+                        codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
+                    }
+                }
+                // если нет текста
+                else
+                {
+                    // удаляем все дочерние элементы.
+                    preTag.RemoveChildren(codeTags);
+                    // с помощью InnerHtml перемещаем контент из дочерних <code/> в родительский <pre/>
+                    foreach (var codeTag in codeTags)
+                    {
+                        preTag.InnerHtml += codeTag.InnerHtml;
+                    }
+                }
+                var tessaPreTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
                 tessaPreTag.InnerHtml = preTag.InnerHtml;
                 preTag.ParentNode.ReplaceChild(tessaPreTag, preTag);
+                
             }
-            // иначе обрабатываем как моноширинный блок.
+            // если тегов <code/> нет.
             else
             {
-                var tessaPreTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
+                var tessaPreTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
                 tessaPreTag.InnerHtml = preTag.InnerHtml;
                 preTag.ParentNode.ReplaceChild(tessaPreTag, preTag);
             }
         }
 
         /// <summary>
-        /// Обработчик тега &lt;code&gt;.
+        /// Обработчик ссылки.
         /// </summary>
-        /// <param name="codeTag">Узел &lt;code&gt; дерева HTML.</param>
-        private static void HandleCode(HtmlNode codeTag)
+        /// <param name="linkTag">Узел ссылки дерева HTML.</param>
+        private static void HandleLink(HtmlNode linkTag)
         {
-            var tessaCodeTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
-            // преобразуем перенос на новую строку в <br/> для того, чтобы моноширинный блок красиво отображался.
-            tessaCodeTag.InnerHtml = codeTag.InnerHtml.Replace("\n", "<br/>");
-            codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
+            // получаем url из атрибута 
+            var linkHref = linkTag.Attributes.FirstOrDefault(a => a.Name == "href")?.Value;
+            // если url нет - нам ссылка не нужна.
+            if (string.IsNullOrEmpty(linkHref))
+            {
+                linkTag.ParentNode.RemoveChild(linkTag);
+                return;
+            }
+            
+            var tessaLinkTag = HtmlNode.CreateNode($"<a style=\"{TessaMarkup.Styles.Link}\" data-custom-href=\"{linkHref}\" href=\"{linkHref}\" class=\"{TessaMarkup.Classes.Link}\"><span/></a>");
+            tessaLinkTag.Descendants("span").First().InnerHtml = linkTag.InnerHtml;
+            linkTag.ParentNode.ReplaceChild(tessaLinkTag, linkTag);
         }
         
         /// <summary>
@@ -267,6 +301,24 @@ namespace TestApp
             breakLineTag.ParentNode.ReplaceChild(tessaBreakLineTag, breakLineTag);
         }
         
+        /// <summary>
+        /// Обработка параграфа.
+        /// </summary>
+        /// <param name="paragraphTag">Узел параграфа дерева HTML.</param>
+        private static void HandleParagraph(HtmlNode paragraphTag)
+        {
+            // если параграф используется как перенос на новую строку.
+            // если у параграфа первый наследник уже <span/>.
+            if (!paragraphTag.ChildNodes.Any() || paragraphTag.FirstChild.Name == "span")
+            {
+                return;
+            }
+
+            var tessaParagraphTag = HtmlNode.CreateNode("<p><span/></p>");
+            tessaParagraphTag.Descendants("span").First().InnerHtml = paragraphTag.InnerHtml;
+            paragraphTag.ParentNode.ReplaceChild(tessaParagraphTag, paragraphTag);
+        }
+        
         #endregion
 
         /// <summary>
@@ -274,17 +326,16 @@ namespace TestApp
         /// </summary>
         /// <param name="mainString">Строка для преобразования.</param>
         /// <returns>Преобразованная строка.</returns>
-        private static string PostParseProcess(string mainString)
+        private string PostParseProcess(string mainString)
         {
             var preString = "{\"Text\":\"<div class=\\\"forum-div\\\">";
             var postString = "</div>\"}";
-            if (IsTopicText)
+            if (this.IsTopicText)
             {
-                preString = "<div class=\\\"forum-div\\\">";
+                preString = "<div class=\"forum-div\">";
                 postString = "</div>";
             }
 
-            //TODO: Нужно для тестирования.
             mainString = mainString.Replace("\n", "", StringComparison.CurrentCulture);
             
             return $"{preString}{mainString}{postString}";

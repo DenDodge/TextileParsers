@@ -13,6 +13,7 @@
 
     <ItemGroup>
       <PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
+      <PackageReference Include="HtmlSanitizer" Version="7.1.542" />
     </ItemGroup>
 
 </Project>

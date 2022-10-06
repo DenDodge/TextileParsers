@@ -116,6 +116,10 @@
             "HtmlAgilityPack": {
               "target": "Package",
               "version": "[1.11.46, )"
+            },
+            "HtmlSanitizer": {
+              "target": "Package",
+              "version": "[7.1.542, )"
             }
           },
           "imports": [

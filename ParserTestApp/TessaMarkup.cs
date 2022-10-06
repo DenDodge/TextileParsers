@@ -34,6 +34,10 @@
             /// Стиль для заголовка.
             /// </summary>
             public const string Header = "font-weight:bold;";
+            /// <summary>
+            /// Стиль для ссылки.
+            /// </summary>
+            public const string Link = "color: rgba(0, 102, 204, 1); text-decoration: underline";
         }
         
         /// <summary>
@@ -76,6 +80,10 @@
             /// Класс для моноширинного блока.
             /// </summary>
             public const string PreCode = "forum-block-monospace";
+            /// <summary>
+            /// Класс для ссылки.
+            /// </summary>
+            public const string Link = "forum-url";
         }
     }
 }
