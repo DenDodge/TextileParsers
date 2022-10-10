@@ -54,6 +54,7 @@ namespace TestApp
         {
             this.DocumentTransitions = new List<(string XPath, Action<HtmlNode> Handler)>
             {
+                ("//table", HandleTable),
                 ("//*[self::strong or self::b]", HandleBold),
                 ("//*[self::em or self::i]", HandleItalic),
                 ("//ins", HandleUnderline),
@@ -137,6 +138,17 @@ namespace TestApp
 
         #region TagHenlers
 
+        /// <summary>
+        /// Обработчик таблицы.
+        /// </summary>
+        /// <param name="tableTag">Узел таблицы дерева HTML.</param>
+        private static void HandleTable(HtmlNode tableTag)
+        {
+            // RichEdit не может обрабатывать таблицы.
+            // Удаляем этот элемент из дерева и сообщаем о том, что не удается преобразовать тег.
+            tableTag.ParentNode.RemoveChild(tableTag);
+        }
+        
         /// <summary>
         /// Обработчик жирного текста.
         /// </summary>
