@@ -113,6 +113,10 @@
         "net5.0": {
           "targetAlias": "net5.0",
           "dependencies": {
+            "ColorCode.HTML": {
+              "target": "Package",
+              "version": "[2.0.13, )"
+            },
             "HtmlAgilityPack": {
               "target": "Package",
               "version": "[1.11.46, )"

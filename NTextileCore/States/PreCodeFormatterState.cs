@@ -27,7 +27,7 @@ namespace NTextileCore.States
                 return true;
             }
 
-            WriteLine("<br />");
+            WriteLine("</p><p>");
 
             return false;
         }

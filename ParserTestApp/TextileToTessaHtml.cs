@@ -1,20 +1,41 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
+using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.RegularExpressions;
+using ColorCode;
 using HtmlAgilityPack;
 using NTextileCore;
+using Tessa.Extensions.Console.Helpers.TextConversion.Models;
 
 namespace TestApp
 {
-   public class TextileToTessaHtml
-    {
+    public class TextileToTessaHtml
+   {
         #region Fiedls
 
         /// <summary>
         /// Флаг, что строка из сообщения топика.
         /// </summary>
         private bool IsTopicText;
+
+        /// <summary>
+        /// Приложенные к тексту файлы.
+        /// </summary>
+        private Dictionary<Guid, (string Name, string Path)> TextAttachments;
+
+        /// <summary>
+        /// Обработанные ссылки.
+        /// </summary>
+        private Dictionary<Guid, string> UriAttachments = new();
+
+        /// <summary>
+        /// Модель описания инцидента.
+        /// </summary>
+        private JsonDescription JsonDescription;
 
         #region Static Fields
 
@@ -27,38 +48,60 @@ namespace TestApp
         /// <summary>
         /// Список обработчиков тегов разметки.
         /// </summary>
-        private static readonly List<(string XPath, Action<HtmlNode> Handler)> DocumentTransitions = new ()
+        private readonly List<(string XPath, Action<HtmlNode> Handler)> DocumentTransitions;
+
+        public TextileToTessaHtml()
         {
-            ("//*[self::strong or self::b]", HandleBold),
-            ("//*[self::em or self::i]", HandleItalic),
-            ("//ins", HandleUnderline),
-            ("//del", HandleCrossedOut),
-            ("//*[self::h1 or self::h2 or self::h3 or self::h4]", HandleHeader),
-            ("//ul", HandleUnorderedList),
-            ("//ol", HandleOrderedList),
-            ("//li", HandleListItem),
-            ("//blockquote", HandleBlockquote),
-            ("//code", HandleCode),
-            ("//pre", HandlePre),
-            ("//a", HandleLink),
-            ("//br", HandleBreakLine),
-            ("//p", HandleParagraph)
-        };
+            this.DocumentTransitions = new List<(string XPath, Action<HtmlNode> Handler)>
+            {
+                ("//*[self::strong or self::b]", HandleBold),
+                ("//*[self::em or self::i]", HandleItalic),
+                ("//ins", HandleUnderline),
+                ("//del", HandleCrossedOut),
+                ("//*[self::h1 or self::h2 or self::h3 or self::h4]", HandleHeader),
+                ("//ul", HandleUnorderedList),
+                ("//ol", HandleOrderedList),
+                ("//li", HandleListItem),
+                ("//blockquote", HandleBlockquote),
+                ("//code", HandleCode),
+                ("//pre", HandlePre),
+                ("//a", this.HandleLink),
+                ("//img", this.HandleImg),
+                ("//br", HandleBreakLine),
+                ("//p", HandleParagraph),
+            };
+        }
 
         #endregion
 
         #endregion
 
-        public (string ResultString, HashSet<Guid> AttachedFileIds) Parse(string mainString, bool isTopicText)
+        /// <summary>
+        /// Преобразовать строку из Textile в TessaHtml
+        /// </summary>
+        /// <param name="mainString">Строка для преобразования.</param>
+        /// <param name="textAttachments">Приложенные к тексту файлы.</param>
+        /// <param name="isTopicText">Флаг, что строка из сообщения топика.</param>
+        /// <returns>Преобразованная строка и ссылки, приложенные к тексту.</returns>
+        public (string ResultText, Dictionary<Guid, string> UriAttachments) Parse(
+            string mainString,
+            Dictionary<Guid, (string Name, string Path)> textAttachments,
+            bool isTopicText)
         {
+            this.UriAttachments.Clear();
             // если пришла пустая строка - вернем заглушку.
             if (string.IsNullOrWhiteSpace(mainString))
             {
-                return (EmptyString, new HashSet<Guid>());
+                return (EmptyString, this.UriAttachments);
             }
             
             this.IsTopicText = isTopicText;
-            
+            this.TextAttachments = textAttachments.ToDictionary(x => x.Key, x => x.Value);
+            // if (!this.IsTopicText)
+            // {
+            //     this.JsonDescription = new JsonDescription();
+            // }
+
             // получаю HTML строку со стандартной разметкой.
             var parseString = TextileFormatter.FormatString(mainString);
 
@@ -66,7 +109,7 @@ namespace TestApp
             var doc = new HtmlDocument();
             doc.LoadHtml(parseString);
             // обрабатываем переходы документа.
-            foreach (var transition in DocumentTransitions)
+            foreach (var transition in this.DocumentTransitions)
             {
                 // получаем теги по XPath, который нужно обработать.
                 var tags = doc.DocumentNode.SelectNodes(transition.XPath) as IList<HtmlNode> ?? new List<HtmlNode>();
@@ -77,19 +120,23 @@ namespace TestApp
                     transition.Handler(tag);
                 }
             }
-
+            
+            var childNodes = HandleSpan(doc.DocumentNode, "");
+            doc.DocumentNode.RemoveAllChildren();
+            doc.DocumentNode.ChildNodes.AddRange(childNodes);
+            
             // получаем преобразованный с помощью HtmlAgilityPack текст.
             parseString = doc.DocumentNode.InnerHtml;
             // устанавливаем разметку в начало и конец строки.
             parseString = this.PostParseProcess(parseString);
 
-            return (parseString, new HashSet<Guid>());
+            return (parseString, this.UriAttachments);
         }
 
         #region Private Methods
 
         #region TagHenlers
-        
+
         /// <summary>
         /// Обработчик жирного текста.
         /// </summary>
@@ -174,7 +221,17 @@ namespace TestApp
         private static void HandleListItem(HtmlNode listItemTag)
         {
             var tessaListItemTag = HtmlNode.CreateNode("<li><p><span/></p></li>");
-            tessaListItemTag.Descendants("span").First().InnerHtml = listItemTag.InnerHtml;
+            // если в li уже есть span.
+            if (listItemTag.SelectNodes("span") is not null)
+            {
+                // удаляем добавленный нами span.
+                tessaListItemTag.Descendants("span").First().Remove();
+                tessaListItemTag.Descendants("p").First().InnerHtml = listItemTag.InnerHtml;
+            }
+            else
+            {
+                tessaListItemTag.Descendants("span").First().InnerHtml = listItemTag.InnerHtml;
+            }
             listItemTag.ParentNode.ReplaceChild(tessaListItemTag, listItemTag);
         }
         
@@ -204,21 +261,20 @@ namespace TestApp
                 var tessaCodeTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
                 tessaCodeTag.InnerHtml = codeTag.InnerHtml;
                 codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
+                return;
             }
+            
             // если есть - тогда добавляем корректное форматирование в строку,
-            else
+            // делим текст на строки.
+            var codeInnerHtml = codeTag.InnerHtml;
+            codeTag.RemoveAll();
+            var lines = codeInnerHtml.Split('\n');
+            foreach (var line in lines)
             {
-                // делим текст на строки.
-                var codeInnerHtml = codeTag.InnerHtml;
-                codeTag.RemoveAll();
-                var lines = codeInnerHtml.Split('\n');
-                foreach (var line in lines)
-                {
-                    // каждую строку оборачиваем в <p/>
-                    var pTag = HtmlNode.CreateNode("<p/>");
-                    pTag.InnerHtml = line.Replace("\n", "");
-                    codeTag.ChildNodes.Add(pTag);
-                }
+                // каждую строку оборачиваем в <p/>
+                var pTag = HtmlNode.CreateNode("<p/>");
+                pTag.InnerHtml = line.Replace("\n", "", StringComparison.CurrentCulture);
+                codeTag.ChildNodes.Add(pTag);
             }
         }
         
@@ -228,66 +284,131 @@ namespace TestApp
         /// <param name="preTag">Узел &lt;pre/&gt; дерева HTML.</param>
         private static void HandlePre(HtmlNode preTag)
         {
+            HtmlNode tessaPreTag;
             // в <pre> могут быть теги <code>.
             var codeTags = preTag.SelectNodes("code");
-            // если есть теги <code/>.
-            if (codeTags is not null)
+            if (codeTags is null)
             {
-                // находим текст, как прямой наследник <pre>.
-                var text = preTag.SelectNodes("text()");
-                // если есть текст - тогда code отдельно в блок
-                if (text is not null)
-                {
-                    foreach (var codeTag in codeTags)
-                    {
-                        var tessaCodeTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
-                        tessaCodeTag.InnerHtml = codeTag.InnerHtml;
-                        codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
-                    }
-                }
-                // если нет текста
-                else
-                {
-                    // удаляем все дочерние элементы.
-                    preTag.RemoveChildren(codeTags);
-                    // с помощью InnerHtml перемещаем контент из дочерних <code/> в родительский <pre/>
-                    foreach (var codeTag in codeTags)
-                    {
-                        preTag.InnerHtml += codeTag.InnerHtml;
-                    }
-                }
-                var tessaPreTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
+                tessaPreTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
                 tessaPreTag.InnerHtml = preTag.InnerHtml;
                 preTag.ParentNode.ReplaceChild(tessaPreTag, preTag);
-                
+                return;
             }
-            // если тегов <code/> нет.
+            // если есть теги <code/>.
+            // находим текст, как прямой наследник <pre>.
+            var text = preTag.SelectNodes("text()");
+            // если есть текст - тогда code отдельно в блок
+            if (text is not null)
+            {
+                foreach (var codeTag in codeTags)
+                {
+                    var tessaCodeTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
+                    tessaCodeTag.InnerHtml = codeTag.InnerHtml;
+                    codeTag.ParentNode.ReplaceChild(tessaCodeTag, codeTag);
+                }
+            }
+            // если нет текста
             else
             {
-                var tessaPreTag = HtmlNode.CreateNode($"<span style=\"{TessaMarkup.Styles.Pre}\" data-custom-style=\"{TessaMarkup.DataCustomStyles.Pre}\" class=\"{TessaMarkup.Classes.Pre}\"/>");
-                tessaPreTag.InnerHtml = preTag.InnerHtml;
-                preTag.ParentNode.ReplaceChild(tessaPreTag, preTag);
+                // удаляем все дочерние элементы.
+                preTag.RemoveChildren(codeTags);
+                // с помощью InnerHtml перемещаем контент из дочерних <code/> в родительский <pre/>
+                foreach (var codeTag in codeTags)
+                {
+                    preTag.InnerHtml += codeTag.InnerHtml;
+                }
             }
+            
+            tessaPreTag = HtmlNode.CreateNode($"<div class=\"{TessaMarkup.Classes.PreCode}\"/>");
+            tessaPreTag.InnerHtml = preTag.InnerHtml;
+            preTag.ParentNode.ReplaceChild(tessaPreTag, preTag);
         }
 
         /// <summary>
         /// Обработчик ссылки.
         /// </summary>
         /// <param name="linkTag">Узел ссылки дерева HTML.</param>
-        private static void HandleLink(HtmlNode linkTag)
+        private void HandleLink(HtmlNode linkTag)
         {
             // получаем url из атрибута 
-            var linkHref = linkTag.Attributes.FirstOrDefault(a => a.Name == "href")?.Value;
+            var linkHrefAttribute = linkTag.Attributes.FirstOrDefault(a => a.Name == "href")?.Value;
             // если url нет - нам ссылка не нужна.
-            if (string.IsNullOrEmpty(linkHref))
+            if (string.IsNullOrEmpty(linkHrefAttribute))
             {
                 linkTag.ParentNode.RemoveChild(linkTag);
                 return;
             }
             
-            var tessaLinkTag = HtmlNode.CreateNode($"<a style=\"{TessaMarkup.Styles.Link}\" data-custom-href=\"{linkHref}\" href=\"{linkHref}\" class=\"{TessaMarkup.Classes.Link}\"><span/></a>");
+            var tessaLinkTag = HtmlNode.CreateNode($"<a style=\"{TessaMarkup.Styles.Link}\" data-custom-href=\"{linkHrefAttribute}\" href=\"{linkHrefAttribute}\" class=\"{TessaMarkup.Classes.Link}\"><span/></a>");
             tessaLinkTag.Descendants("span").First().InnerHtml = linkTag.InnerHtml;
             linkTag.ParentNode.ReplaceChild(tessaLinkTag, linkTag);
+
+            var uriId = Guid.NewGuid();
+            this.UriAttachments.Add(uriId, linkHrefAttribute);
+            // if (!this.IsTopicText)
+            // {
+            //     this.JsonDescription.Attachments.Add(GenerateItemModel(
+            //         uriId, 
+            //         linkHrefAttribute, 
+            //         !string.IsNullOrEmpty(linkTag.InnerHtml) ? linkTag.InnerHtml : linkHrefAttribute, 
+            //         AttachmentType.Link));
+            // }
+        }
+
+        /// <summary>
+        /// Обработчик приложенного изображения.
+        /// </summary>
+        /// <param name="imgTag">Узел изображения дерева HTML.</param>
+        private void HandleImg(HtmlNode imgTag)
+        {
+            var imgSrcAttributeValue = imgTag.Attributes.FirstOrDefault(a => a.Name == "src")?.Value;
+            // если атрибут "src" пустой, то что-то пошло не так.
+            if (string.IsNullOrEmpty(imgSrcAttributeValue))
+            {
+                // удаляем это изображение из разметки.
+                imgTag.ParentNode.RemoveChild(imgTag);
+                return;
+            }
+
+            // если проложенное изображение - это ссылка.
+            if (Uri.IsWellFormedUriString(imgSrcAttributeValue, UriKind.Absolute))
+            {
+                var imgTitleAttributeValue = imgTag.Attributes.FirstOrDefault(a => a.Name == "title")?.Value;
+                var tessaLinkTag = HtmlNode.CreateNode($"<a style=\"{TessaMarkup.Styles.Link}\" data-custom-href=\"{imgSrcAttributeValue}\" href=\"{imgSrcAttributeValue}\" class=\"{TessaMarkup.Classes.Link}\"><span/></a>");
+                tessaLinkTag.Descendants("span").First().InnerHtml = !string.IsNullOrWhiteSpace(imgTitleAttributeValue) ? imgTitleAttributeValue : imgSrcAttributeValue;
+                imgTag.ParentNode.ReplaceChild(tessaLinkTag, imgTag);
+                
+                var uriId = Guid.NewGuid();
+                this.UriAttachments.Add(uriId, imgSrcAttributeValue);
+                // if (!this.IsTopicText)
+                // {
+                //     this.JsonDescription.Attachments.Add(GenerateItemModel(
+                //         uriId, 
+                //         imgSrcAttributeValue, 
+                //         !string.IsNullOrWhiteSpace(imgTitleAttributeValue) ? imgTitleAttributeValue : imgSrcAttributeValue, 
+                //         AttachmentType.Link));
+                // }
+                
+                return;
+            }
+            
+#pragma warning disable CA1309
+            var image = this.TextAttachments.First(a => string.Equals(a.Value.Name, imgSrcAttributeValue, StringComparison.CurrentCultureIgnoreCase));
+#pragma warning restore CA1309
+            
+            var thumbnail = GenerateThumbnail(image.Value.Path);
+            
+            var tessaImgTag = HtmlNode.CreateNode($"<p><span><img data-custom-style=\"{string.Format(TessaMarkup.DataCustomStyles.Img, thumbnail.Width, thumbnail.Height)}\" name=\"{image.Key:N}\" src=\"{thumbnail.Base64}\"/></span></p>");
+            imgTag.ParentNode.ReplaceChild(tessaImgTag, imgTag);
+            // if (!this.IsTopicText)
+            // {
+            //     this.JsonDescription.Attachments.Add(GenerateItemModel(
+            //         image.Key, 
+            //         imgSrcAttributeValue, 
+            //         image.Key.ToString("N"), 
+            //         AttachmentType.InnerItem));
+            //     this.TextAttachments.Remove(image.Key);
+            // }
         }
         
         /// <summary>
@@ -313,14 +434,175 @@ namespace TestApp
             {
                 return;
             }
-
             var tessaParagraphTag = HtmlNode.CreateNode("<p><span/></p>");
+            var styleAttributes = paragraphTag.Attributes.Where(a => a.Name == "style").ToList();
+            if (styleAttributes.Any())
+            {
+                tessaParagraphTag.Descendants("p").First().Attributes.AddRange(styleAttributes);
+            }
+            tessaParagraphTag.Attributes.AddRange(styleAttributes);
             tessaParagraphTag.Descendants("span").First().InnerHtml = paragraphTag.InnerHtml;
             paragraphTag.ParentNode.ReplaceChild(tessaParagraphTag, paragraphTag);
         }
-        
+
+        /// <summary>
+        /// Обработчик тегов &lt;span/&gt;
+        /// </summary>
+        /// <param name="parentNode">Узел дерева HTML.</param>
+        /// <param name="parentStyleValue">Значение стиля родительского элемента.</param>
+        /// <returns>Список преобразованных тегов родительского <paramref name="parentNode"/>.</returns>
+        private static List<HtmlNode> HandleSpan(HtmlNode parentNode, string parentStyleValue)
+        {
+            var resultTags = new List<HtmlNode>();
+            
+            if (!parentNode.ChildNodes.Any())
+            {
+                if (parentNode.Name == "#text" && !string.IsNullOrWhiteSpace(parentStyleValue) && !string.IsNullOrWhiteSpace(parentNode.InnerText))
+                {
+                    var newSpan = HtmlNode.CreateNode("<span/>");
+                    newSpan.Attributes.Add("style", parentStyleValue);
+                    newSpan.InnerHtml = parentNode.InnerHtml;
+                    resultTags.Add(newSpan);
+                    return resultTags;
+                }
+                resultTags.Add(parentNode.Clone());
+                return resultTags;
+            }
+            
+            foreach (var currentChild in parentNode.ChildNodes)
+            {
+                if (currentChild.Name == "span")
+                {
+                    var styleAttributeValue = currentChild.Attributes.FirstOrDefault(a => a.Name == "style")?.Value;
+                    var attributeValue = $"{parentStyleValue}{styleAttributeValue}";
+                    var parseResult = HandleSpan(currentChild, attributeValue);
+                    if (!parseResult.Exists(ps => ps.Name == "span"))
+                    {
+                        resultTags.Add(currentChild);
+                    }
+                    else
+                    {
+                        resultTags.AddRange(parseResult);
+                    }
+                }
+                else
+                {
+                    resultTags.AddRange(HandleSpan(currentChild, parentStyleValue));
+                }
+            }
+
+            if (parentNode.Name != "span" && parentNode.Name != "#document")
+            {
+                var newNode = parentNode.Clone();
+                newNode.RemoveAllChildren();
+                newNode.ChildNodes.AddRange(resultTags);
+                return new List<HtmlNode>
+                {
+                    newNode
+                };
+            }
+
+            return resultTags;
+        }
+
         #endregion
 
+        /// <summary>
+        /// Создать модель приложенного файла.
+        /// </summary>
+        /// <param name="id">Идентификатор приложенного файла.</param>
+        /// <param name="uri">Uri приложенного файла.</param>
+        /// <param name="caption">Описание приложенного файла.</param>
+        /// <param name="attachmentType">Тип приложенного файла.</param>
+        /// <param name="showInToolbar">Флаг отображать вложение под сообщением в режиме чтения.</param>
+        /// <returns>Модель приложенного файла.</returns>
+        // private static ItemModel GenerateItemModel(Guid id, string uri, string caption, AttachmentType attachmentType, bool showInToolbar = false) =>
+        // new (id, uri, caption, attachmentType)
+        //     {
+        //         MessageID = Guid.Empty,
+        //         StoreMode = AttachmentStoreMode.Insert,
+        //         ShowInToolbar = showInToolbar
+        //     };
+
+        /// <summary>
+        /// Получить миниатюру приложенного изображения и его размеры.
+        /// </summary>
+        /// <param name="pathToImage">Путь до изображения.</param>
+        /// <returns>Миниатюра приложенного изображения и его размеры.</returns>
+        [SuppressMessage("Interoperability", "CA1416")]
+        private static (string Base64, int Width, int Height) GenerateThumbnail(string pathToImage)
+        {
+            // FileStream sourceStream = null;
+            // Bitmap bitmap = null;
+            // MemoryStream stream;
+            // int imageWidth;
+            // int imageHeight;
+            //
+            // try
+            // {
+            //     sourceStream = FileHelper.OpenRead(pathToImage);
+            //     bitmap = new Bitmap(sourceStream);
+            //     sourceStream.Dispose();
+            //     sourceStream = null;
+            //
+            //     if (bitmap.Width >= ForumHelper.ImageSideSize && bitmap.Width > bitmap.Height)
+            //     {
+            //         double factor = bitmap.Width / (float) ForumHelper.ImageSideSize;
+            //         var newHeight = (int) (bitmap.Height / factor);
+            //         var resizedBitmap = new Bitmap(bitmap, ForumHelper.ImageSideSize, newHeight);
+            //         bitmap.Dispose();
+            //         bitmap = resizedBitmap;
+            //     }
+            //     else if (bitmap.Height >= ForumHelper.ImageSideSize)
+            //     {
+            //         double factor = bitmap.Height / (float) ForumHelper.ImageSideSize;
+            //         var newWidth = (int) (bitmap.Width / factor);
+            //         var resizedBitmap = new Bitmap(bitmap, newWidth, ForumHelper.ImageSideSize);
+            //         bitmap.Dispose();
+            //         bitmap = resizedBitmap;
+            //     }
+            //     
+            //     var encoder = ImageCodecInfo.GetImageDecoders().First(codec => codec.FormatID == ImageFormat.Jpeg.Guid);
+            //     var myEncoderParameters = new EncoderParameters(1)
+            //     {
+            //         Param =
+            //         {
+            //             [0] = new EncoderParameter(Encoder.Quality, 75L)
+            //         }
+            //     };
+            //     stream = new MemoryStream(80_000);
+            //     bitmap.Save(stream, encoder, myEncoderParameters);
+            //     imageWidth = bitmap.Width;
+            //     imageHeight = bitmap.Height;
+            // }
+            // finally
+            // {
+            //     bitmap?.Dispose();
+            //     sourceStream?.Dispose();
+            // } 
+            //
+            // stream.Position = 0L;
+            // const string prefix = "data:image/png;base64,";
+            // using var stringStream = new MemoryStream(prefix.Length + (int) stream.Length);
+            // using (var stringWriter = new StreamWriter(stringStream, Encoding.UTF8, leaveOpen: true))
+            // {
+            //     stringWriter.Write(prefix);
+            // }
+            // using (var base64Stream = new CryptoStream(stream, new ToBase64Transform(), CryptoStreamMode.Read))
+            // {
+            //     base64Stream.CopyTo(stringStream);
+            // }
+            // string base64;
+            // stringStream.Position = 0L;
+            // using (var stringReader = new StreamReader(stringStream, Encoding.UTF8, detectEncodingFromByteOrderMarks: false))
+            // {
+            //     base64 = stringReader.ReadToEnd();
+            // }
+            //     
+            // return (base64, imageWidth, imageHeight);
+            return ("", 0, 0);
+        }
+        
         /// <summary>
         /// Установка начала и конца строки.
         /// </summary>
@@ -328,19 +610,30 @@ namespace TestApp
         /// <returns>Преобразованная строка.</returns>
         private string PostParseProcess(string mainString)
         {
-            var preString = "{\"Text\":\"<div class=\\\"forum-div\\\">";
-            var postString = "</div>\"}";
-            if (this.IsTopicText)
-            {
-                preString = "<div class=\"forum-div\">";
-                postString = "</div>";
-            }
-
+            const string preString = "<div class=\"forum-div\">";
+            const string postString = "</div>";
             mainString = mainString.Replace("\n", "", StringComparison.CurrentCulture);
-            
-            return $"{preString}{mainString}{postString}";
+            mainString = $"{preString}{mainString}{postString}";
+            // if (!this.IsTopicText)
+            // {
+            //     this.JsonDescription.Text = mainString;
+            //     // добавить остальные файлы.
+            //     foreach (var textAttachment in this.TextAttachments)
+            //     {
+            //         this.JsonDescription.Attachments.Add(GenerateItemModel(
+            //             textAttachment.Key,
+            //             $"tessa://attachfile_{textAttachment.Key}", 
+            //             textAttachment.Value.Name, 
+            //             AttachmentType.File,
+            //             true));
+            //         this.TextAttachments.Remove(textAttachment.Key);
+            //     }
+            //     return StorageHelper.SerializeToTypedJson(this.JsonDescription.GetStorage());
+            // }
+
+            return mainString;
         }
 
         #endregion
-    }
+   }
 }

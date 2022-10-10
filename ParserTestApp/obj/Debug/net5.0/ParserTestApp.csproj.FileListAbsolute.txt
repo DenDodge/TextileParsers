@@ -26,3 +26,5 @@ D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\Parse
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\System.Runtime.CompilerServices.Unsafe.dll
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\System.Text.Encoding.CodePages.dll
 D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\runtimes\win\lib\netcoreapp3.1\System.Text.Encoding.CodePages.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\ColorCode.Core.dll
+D:\WORK_SYNTELLECT\_from Desktop\Таски\tech_portal\202\TextileParsers\ParserTestApp\bin\Debug\net5.0\ColorCode.HTML.dll

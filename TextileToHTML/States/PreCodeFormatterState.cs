@@ -29,7 +29,7 @@ namespace TextileToHTML.States
         {
             if (Regex.IsMatch(input, @"^\s*$"))
                 return true;
-            Formatter.Output.WriteLine("<br />");
+            Formatter.Output.WriteLine("</p><p>");
             return false;
         }
 

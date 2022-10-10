@@ -53,6 +53,8 @@
             /// Пользовательский стиль для заголовка.
             /// </summary>
             public const string Header = "font-size:18;";
+
+            public const string Img = "width:{0};height:{1};";
         }
         
         /// <summary>
