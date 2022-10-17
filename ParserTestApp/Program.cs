@@ -14,7 +14,7 @@ namespace TestApp
         {
             //var testString = ">>sample\r\n>>another\r\n>new\r\n>>new new\r\n>new new new";
             
-            //var testString = "# Item 1\r\n# Item 2\r\n## Item 21\r\n## Item 22\r\n# Item 3";
+            var testString = "# Item 1\r\n# Item 2\r\n## Item 21\r\n## Item 22\r\n# Item 3";
             
             //var testString = "Коллеги, здравствуйте!\r\n\r\nПодскажите, пожалуйста, с какой целью было сделано следующее:\r\n# Возьмем любое строковое поле в карточке\r\n# Запишем в него значение и сохраним карточку\r\n# Сотрем это значение в этом поле и сохраним карточку\r\n# *В строковое поле запишется пустая строка \"\" (раньше в v.2.7 записывалось @NULL@)*\r\n\r\nПри таком решении возможны последствия.\r\nВыполним вышеперечисленные пункты, например, для поля \"Исходящий номер\" в карточке \"Входящий\".\r\nПроизведем поиск по данному полю с параметром фильтрации \"пусто\" в представлении \"Входящие\".\r\nКарточка не отобразится в представлении, поскольку в поле \"Исходящий номер\" записана пустая строка, а не NULL.\r\n\r\nДанный подход \"ломает\" старое решение, в котором проверялось только на NULL (теперь нужно проверять и на пустую строку).\r\n\r\nКонечно, возможно сделать небольшой костыль - добавить расширения очистки связанных полей для строковых полей в карточке, где\r\nи устанавливать значение отслеживаемой колонки равное значению очищаемой колонки, но как-то так себе.";
             
@@ -22,7 +22,7 @@ namespace TestApp
             
             //var testString = "p>. Привет";
             
-            var testString = "| A | simple | table | row |\r\n| And | another | table | row |\r\n| With an | | empty | cell |";
+            //var testString = "| A | simple | table | row |\r\n| And | another | table | row |\r\n| With an | | empty | cell |";
 
             //var testString = "<pre> Вот тут текст после пре. \r\n <code class=\"java\">\r\nforeach (CardFile file in targetCard.Files)\r\n{\r\n    Guid originalFileID = file.ExternalSource.FileID;\r\n    CardFile originalFile = card.Files.First(x => x.RowID == originalFileID);\r\n\r\n    if (originalFile.Card.Sections.TryGetValue(CardSignatureHelper.SectionName, out CardSection originalSignatures))\r\n    {\r\n        var signatures = file.Card.Sections.GetOrAddTable(CardSignatureHelper.SectionName).Rows;\r\n        foreach (CardRow originalSignature in originalSignatures.Rows)\r\n        {\r\n            CardRow signature = signatures.Add(originalSignature);\r\n            signature.RowID = Guid.NewGuid();\r\n            signature.State = CardRowState.Inserted;\r\n        }\r\n    }\r\n}\r\n</code> Вот тут тест после первого кода. \r\n <code class=\"java\">\r\nforeach (CardFile file in targetCard.Files)\r\n{\r\n    Guid originalFileID = file.ExternalSource.FileID;\r\n    CardFile originalFile = card.Files.First(x => x.RowID == originalFileID);\r\n\r\n    if (originalFile.Card.Sections.TryGetValue(CardSignatureHelper.SectionName, out CardSection originalSignatures))\r\n    {\r\n        var signatures = file.Card.Sections.GetOrAddTable(CardSignatureHelper.SectionName).Rows;\r\n        foreach (CardRow originalSignature in originalSignatures.Rows)\r\n        {\r\n            CardRow signature = signatures.Add(originalSignature);\r\n            signature.RowID = Guid.NewGuid();\r\n            signature.State = CardRowState.Inserted;\r\n        }\r\n    }\r\n}\r\n</code> Вот тут текст после второго кода.\r\n </pre> \r\n Вот тут текст после пре.";
             
